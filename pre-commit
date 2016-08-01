@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+
+# This pre-commit hooks runs right before any files are commited and before the commit message was written.
+# It is useful, if you work with many different branches in your Rails project and the db schema differs between the 
+# branches.
+#
+# What happens:
+# A MySQL db dump is created and saved with the current branch name. The dump is added to the current commit.
+
+require "FileUtils"
+require "YAML"
+
+db = ""
+user = ""
+pass = ""
+
+if File.exist?("./config/database.yml")
+  y = YAML.load_file("./config/database.yml")
+  db = y.fetch("development", {}).fetch("database", "")
+  user = y.fetch("development", {}).fetch("username", "")
+  pass = y.fetch("development", {}).fetch("password", "")
+  branch = `git rev-parse --abbrev-ref HEAD`.gsub("/", "-").gsub("\r\n", "").gsub("\n", "")
+
+  use_pass = !pass.nil? ? "-p#{pass}" : ''
+  system("mysqldump -u #{user} #{use_pass} --skip-extended-insert #{db} > ./db/#{branch}.sql")
+  system("git add ./db/#{branch}.sql")
+end
