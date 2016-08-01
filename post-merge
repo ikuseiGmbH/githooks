@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+
+# This hook is invoked by git merge, which happens when a git pull is done on a local repository.
+# This hook can be used in conjunction with a corresponding pre-commit hook to save and restore any 
+# form of metadata associated with the working tree (e.g.: permissions/ownership, ACLS, etc).
+#
+# If a MySQL dump for the current branch already exists, it is restored to the database.
+
+require "FileUtils"
+require "YAML"
+
+db = ""
+user = ""
+pass = ""
+branch = `git rev-parse --abbrev-ref HEAD`.gsub("/", "-").gsub("\r\n", "").gsub("\n", "")
+
+if File.exist?("./config/database.yml") && File.exist?("./db/#{branch}.sql")
+  y = YAML.load_file("./config/database.yml")
+  db = y.fetch("development", {}).fetch("database", "")
+  user = y.fetch("development", {}).fetch("username", "")
+  pass = y.fetch("development", {}).fetch("password", "")
+
+  use_pass = !pass.nil? ? "-p#{pass}" : ''
+  system("mysql -u #{user} #{use_pass} --skip-extended-insert #{db} < ./db/#{branch}.sql")
+end
