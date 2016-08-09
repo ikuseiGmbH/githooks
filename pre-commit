@@ -15,6 +15,10 @@ user = ""
 pass = ""
 
 if File.exist?("./config/database.yml")
+
+  # Create backup folder if not exists
+  FileUtils.mkdir_p("./db/githook_dumps/")
+
   y = YAML.load_file("./config/database.yml")
   db = y.fetch("development", {}).fetch("database", "")
   user = y.fetch("development", {}).fetch("username", "")
@@ -23,6 +27,5 @@ if File.exist?("./config/database.yml")
 
   use_pass = !pass.nil? ? "-p#{pass}" : ''
   # Dump only the table structure not the contents
-  system("mysqldump -d -u #{user} #{use_pass} --skip-extended-insert #{db} > ./db/#{branch}.sql")
-  system("git add ./db/#{branch}.sql")
+  system("mysqldump -d -u #{user} #{use_pass} -B --add-drop-database #{db} > ./db/githook_dumps/#{branch}.sql")
 end
