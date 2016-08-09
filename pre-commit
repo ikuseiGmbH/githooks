@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # This pre-commit hooks runs right before any files are commited and before the commit message was written.
-# It is useful, if you work with many different branches in your Rails project and the db schema differs between the 
+# It is useful, if you work with many different branches in your Rails project and the db schema differs between the
 # branches.
 #
 # What happens:
@@ -22,6 +22,7 @@ if File.exist?("./config/database.yml")
   branch = `git rev-parse --abbrev-ref HEAD`.gsub("/", "-").gsub("\r\n", "").gsub("\n", "")
 
   use_pass = !pass.nil? ? "-p#{pass}" : ''
-  system("mysqldump -u #{user} #{use_pass} --skip-extended-insert #{db} > ./db/#{branch}.sql")
+  # Dump only the table structure not the contents
+  system("mysqldump -d -u #{user} #{use_pass} --skip-extended-insert #{db} > ./db/#{branch}.sql")
   system("git add ./db/#{branch}.sql")
 end
